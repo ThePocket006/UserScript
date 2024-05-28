@@ -9,8 +9,8 @@
 // @match        *://cupiaprod.service-now.com/*
 // @match        *://*.service-now.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=service-now.com
-// @updateURL    https://raw.githubusercontent.com/thepocket006/UserScript/main/patch/service-now.pk6.user.meta.js
-// @downloadURL  https://raw.githubusercontent.com/thepocket006/UserScript/main/patch/service-now.pk6.user.js
+// @updateURL    https://raw.githubusercontent.com/thepocket006/UserScript/main/patch/service-now/service-now.pk6.user.meta.js
+// @downloadURL  https://raw.githubusercontent.com/thepocket006/UserScript/main/patch/service-now/service-now.pk6.user.js
 // @grant        unsafeWindow
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -20,4 +20,5 @@
 // @require      https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js
 // @require      https://cdn.jsdelivr.net/npm/underscore@1/underscore-min.js
 // @require      https://unpkg.com/gm-storage@2.0.3
+// @noframes
 // ==/UserScript==

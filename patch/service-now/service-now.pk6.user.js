@@ -9,8 +9,8 @@
 // @match        *://cupiaprod.service-now.com/*
 // @match        *://*.service-now.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=service-now.com
-// @updateURL    https://raw.githubusercontent.com/thepocket006/UserScript/main/patch/service-now.pk6.user.meta.js
-// @downloadURL  https://raw.githubusercontent.com/thepocket006/UserScript/main/patch/service-now.pk6.user.js
+// @updateURL    https://raw.githubusercontent.com/thepocket006/UserScript/main/patch/service-now/service-now.pk6.user.meta.js
+// @downloadURL  https://raw.githubusercontent.com/thepocket006/UserScript/main/patch/service-now/service-now.pk6.user.js
 // @grant        unsafeWindow
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -20,30 +20,11 @@
 // @require      https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js
 // @require      https://cdn.jsdelivr.net/npm/underscore@1/underscore-min.js
 // @require      https://unpkg.com/gm-storage@2.0.3
+// @noframes
 // ==/UserScript==
 
 (function(window, $, Swal, _) {
     'use strict';
-
-    const console = console || window.console
-
-    (function() {
-        const debug = false; // Set this to false to disable logging
-    
-        function customLogMethod(method) {
-            return function(...args) {
-                if (debug) {
-                    console[method](...args);
-                }
-            }
-        }
-    
-        // Bind custom log methods
-        console.log = customLogMethod('log');
-        console.info = customLogMethod('info');
-        console.warn = customLogMethod('warn');
-        console.error = customLogMethod('error');
-    })();
 
     function findRoots(ele) {
         return [
@@ -71,12 +52,12 @@
         });*/
 
         const doc = (function(){
-            const d = [document, ...findRoots(window.document)];
+            var d = [document, ...findRoots(window.document)];
 
             const r = {
                 documents: d,
                 find: function(selector, notSelect = '') {
-                    /*const r =*/ return _.filter(_.flatten([_.map(doc, function(v){
+                    /*const r =*/ return _.filter(_.flatten([_.map(r.documents, function(v){
                         const tmp = $(v).find(selector).not(notSelect);
                         return tmp.length ? tmp : undefined;
                     })]), function(v){
@@ -104,7 +85,8 @@
 
     function autoActionRefresh(doc, a = ''){
         const actions = [
-            ['div.navbar-header > button.icon-menu.navbar-btn', '.context_item[role="menuitem"][item_id="216ac28a0a0a0bb200af43eb879c30ae"]']
+            ['div.navbar-header > button.icon-menu.navbar-btn', '.context_item[role="menuitem"][item_id="216ac28a0a0a0bb200af43eb879c30ae"]'],
+            ['div.navbar-header > button.icon-menu.navbar-btn.additional-actions-context-menu-button', '.context_item[role="menuitem"][item_id][href^="reloadWindow"]']
         ];
 
         if($.isArray(a)) {
@@ -113,8 +95,11 @@
 
         console.log('autoActionRefresh')
         _.each(actions, function(v, i) {
+            var selectors = [];
             _.each(v, function(value, index) {
                 console.log('actions[' + i + '][' + index + ']: ', value);
+                selectors.push(value);
+                value = selectors.join(' ');
                 const e = doc.find(value, a);
 
                 console.log('autoActionRefresh:e:', e);
@@ -291,19 +276,7 @@
     });
 
     $(document).ready(function() {
-        let hasShadowRoot = storage.get(name.STORE_HAS_SHADOWROOT, false),
-        init = storage.get(name.STORE_INIT, false);
-
-        const els = [...findRoots(window.document)];
-
-        if(init === false) {
-            init = true;
-            if(els.length > 1) {
-                hasShadowRoot = true;
-                storage.set(name.STORE_HAS_SHADOWROOT, hasShadowRoot);
-            }
-
-            storage.set(name.STORE_INIT, init);
-        }
+        console.log('start service-now patch');
+        setTimeout(start, 1000);
     });
 })(unsafeWindow||window, jQuery||$, Swal, _);
