@@ -196,19 +196,6 @@
         });
     }
 
-    const refreshApp = (function(){
-        // Exclude selector
-        const a = ['[aria-label="Transmettre un commentaire"]', '[aria-label="Submit Feedback"]'];
-
-        // Include selector
-        const s = ['a[role=menuitem][ng-click^=refreshAllPane]', 'button.now-button[data-tooltip]', 'button[id=REFRESH_COMPONENT][title]', '.context_item[role="menuitem"][item_id="216ac28a0a0a0bb200af43eb879c30ae"]'];
-
-        return function(){
-            console.log('Refresh App');
-            autoRefresh(s, a);
-        }
-    })()
-
     var time;
     const name = {
         STORE_INIT: 'STORE_INIT',
@@ -259,6 +246,131 @@
         time = setInterval(refreshApp, 1000*refreshTime);
     }
 
+    var is = {
+        null : function(el){ return el === null },
+        NaN : function(el){ return Number.isNaN(el) },
+        bool : function(el){ return typeof el === "boolean" },
+        string : function(el){ return typeof el === "string" },
+        function : function(el){ return typeof el === "function" },
+        number : function(el){ return typeof el === "number" },
+        object : function(el){ return typeof el === "object" && !this.null(el) },
+        array : function(el){ return this.object(el) && el instanceof Array },
+        undef : function(el){ return typeof el === "undefined" },
+        false : function(el){ return el === false },
+        true : function(el){ return el === true },
+    };
+
+    var uri = (function (window) {
+        var uri = {};
+        var location = !is.undef(window.location) ? window.location : location;
+        var url_pattern = /^(https?|ftp|torrent|image|irc):\/\/(-\.)?([^\s\/?\.#]+\.?)+(\/[^\s]*)?$/i;
+
+        var geturl = function(url){
+            console.log("geturl", uri);
+            return ((is.string(url) && (url = url.trim())) || (is.object(url) && url.hasOwnProperty("href") && (url = url.href))) ? (uri.validUrl(url)?url:uri.baseUrl(url)):uri.currentUrl()
+        }
+
+        uri.baseUrl = function (pathname) {
+            var parser = uri.parseURL(uri.currentUrl());
+            var baseUrl = parser.origin ? parser.origin : location.origin;
+            return baseUrl + (is.string(pathname) && (pathname = pathname.trim()) ? '/' + pathname : '');
+        }
+        uri.currentUrl = function () {
+            return location.href;
+        }
+        uri.validUrl = function(url) { return is.string(url) && url.match(url_pattern) ? true : false; }
+        uri.go = function (url) {
+            location.href = geturl(url);
+        }
+        uri.refresh = function () {
+            uri.go(uri.currentUrl());
+        }
+        uri.reload = function () {
+            location.reload(true);
+        }
+        uri.parseURL = function (url) {
+            // Let the browser do the work
+            var _parser = document.createElement('a'), parser = {};
+
+            _parser.href = geturl(url);
+
+            $.extend(parser, _parser);
+            return $.extend(parser, {
+                stl : parser.hostname.split('.').slice(-2)[0],
+                subdomain : (function(){
+                    var tmp = parser.hostname.replace(parser.hostname.split('.').slice(-2), '');
+                    return tmp;
+                })(),
+                searchObject  : (function(){
+                    var searchObject = {}, queries, split, i;
+                    // Convert query string to object
+                    if(parser.search.trim()){
+                        queries = parser.search.trim().replace(/^\?/, '').split('&');
+                        for( i = 0; i < queries.length; i++ ) {
+                            split = queries[i].split('=');
+                            searchObject[split[0]] = split[1];
+                        }
+                    }
+                    return searchObject;
+                })(),
+                setQuery : function(key, val){
+                    if(parser.search.trim() && is.string(key) && key){
+                        key = encodeURIComponent(key);
+                        val = encodeURIComponent(val);
+
+                        var search = this.search;
+                        var kvp = key+"="+val;
+
+                        var r = new RegExp("(&|\\?)"+key+"=[^\&]*");
+
+                        search = search.replace(r,"$1"+kvp);
+
+                        if(!RegExp.$1) {search += (search.trim().length>0 ? '&' : '?') + kvp;};
+
+                        _parser.search = search;
+                        parser = uri.parseURL(_parser.href);
+                    }
+                    return parser;
+                },
+                /*removeQuery : function(key){
+                    var obj = this.searchObject;
+                    if(this.hasQuery(key) && delete obj[key]){
+
+                    }else return true;
+                },
+                hasQuery : function(key){
+                },*/
+            });
+        }
+        return uri;
+    })(window);
+
+    var validCheckUrl = function(){
+        const path = uri.currentUrl().replace(uri.baseUrl, '');
+
+        return [
+            /\/now\/cwf\/agent\//i
+        ].filter(function(v){ return v.test(path) }).length > 0;
+    }
+
+    const refreshApp = (function(){
+        console.log({validCheckUrl: validCheckUrl()})
+        if(validCheckUrl()) {
+            // Exclude selector
+            const a = ['[aria-label="Transmettre un commentaire"]', '[aria-label="Submit Feedback"]'];
+
+            // Include selector
+            const s = ['a[role=menuitem][ng-click^=refreshAllPane]', 'button.now-button[data-tooltip]', 'button[id=REFRESH_COMPONENT][title]', '.context_item[role="menuitem"][item_id="216ac28a0a0a0bb200af43eb879c30ae"]'];
+
+            return function(){
+                console.log('Refresh App', {validCheckUrl: validCheckUrl()});
+                autoRefresh(s, a);
+            }
+        }else{
+            console.log('Not refresh (not valid url)');
+        }
+    })()
+
     var defaultRefreshTime = 60*2,
         refreshTime = storage.get(name.STORE_REFRESH_TIME, defaultRefreshTime);
 
@@ -276,7 +388,7 @@
     });
 
     $(document).ready(function() {
-        console.log('start service-now patch');
+        console.log('start service-now patch', {validCheckUrl: validCheckUrl()});
         setTimeout(start, 1000);
     });
 })(unsafeWindow||window, jQuery||$, Swal, _);
